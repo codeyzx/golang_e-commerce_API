@@ -12,28 +12,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
 	r := gin.Default()
 
-	// connect to database
-	// PLEASE CREATE go-ecommerce database first.
-	dsn := "root:@tcp(127.0.0.1:3306)/go-ecommerce?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "658dbl1kclyq13ywg05g:pscale_pw_oOrvVtlIK9Cmxw0cPpUmd4McemFhYv35NyvY1FGnjhU@tcp(ap-southeast.connect.psdb.cloud)/go-ecommerce?tls=true"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		log.Fatal("DB Connection Error")
 	}
 
-	// auto migrate (auto add table)
 	db.AutoMigrate(&allproducts.AllProduct{}, &book.Book{}, &hoodie.Hoodie{}, &laptop.Laptop{}, &transaction.Transaction{})
 
-	// API Versioning
 	v1 := r.Group("/v1")
 
-
-	// All Products
 	allProductRepository := allproducts.NewRepository(db)
 	allProductService := allproducts.NewService(allProductRepository)
 	allProductHandler := handler.NewAllProductHandler(allProductService)
@@ -46,28 +42,23 @@ func main() {
 	v1.PUT("/products/:id", allProductHandler.UpdateBook)
 	v1.DELETE("/products/:id", allProductHandler.DeleteBook)
 
-	// get by name product
 	v1.GET("/products/np/:name_product/:email_user/:price", allProductHandler.GetBookByProductName)
 	v1.DELETE("/products/np/:name_product/:email_user/:price", allProductHandler.DeleteByNameProduct)
 	v1.PUT("/products/np/:name_product/:email_user/:price", allProductHandler.UpdateByNameProduct)
 
-	// Transaction
 	transactionRepository := transaction.NewRepository(db)
 	transactionService := transaction.NewService(transactionRepository)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
+	v1.POST("/charge", transactionHandler.ChargeToken)
 	v1.POST("/transaction", transactionHandler.PostBooksHandler)
 	v1.GET("/transaction", transactionHandler.GetBooksList)
 	v1.GET("/transaction/:id", transactionHandler.GetBookById)
 	v1.PUT("/transaction/:id", transactionHandler.UpdateBook)
 	v1.DELETE("/transaction/:id", transactionHandler.DeleteBook)
 
-
-	// 
 	v1.GET("/transaction/user/:email_buyer", transactionHandler.GetBookByUser)
 
-
-	// 		BOOK
 	bookRepository := book.NewRepository(db)
 	bookService := book.NewService(bookRepository)
 	bookHandler := handler.NewBookHandler(bookService)
@@ -77,8 +68,7 @@ func main() {
 	v1.GET("/products/book/:id", bookHandler.GetBookById)
 	v1.PUT("/products/book/:id", bookHandler.UpdateBook)
 	v1.DELETE("/products/book/:id", bookHandler.DeleteBook)
-	
-	//		Laptop
+
 	laptopRepository := laptop.NewRepository(db)
 	laptopService := laptop.NewService(laptopRepository)
 	laptopHandler := handler.NewLaptopHandler(laptopService)
@@ -89,7 +79,6 @@ func main() {
 	v1.PUT("/products/laptop/:id", laptopHandler.UpdateBook)
 	v1.DELETE("/products/laptop/:id", laptopHandler.DeleteBook)
 
-	//		Hoodie
 	hoodieRepository := hoodie.NewRepository(db)
 	hoodieService := hoodie.NewService(hoodieRepository)
 	hoodieHandler := handler.NewHoodieHandler(hoodieService)
@@ -100,6 +89,5 @@ func main() {
 	v1.PUT("/products/hoodie/:id", hoodieHandler.UpdateBook)
 	v1.DELETE("/products/hoodie/:id", hoodieHandler.DeleteBook)
 
-	// 
 	r.Run(":3000")
 }
